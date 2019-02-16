@@ -9,18 +9,18 @@ import (
 type hostData struct {
 	host    string
 	visited map[string]bool
+	err     error
 }
 
-var h = hostData{}
-
-func host(urlName string) (name string, err error) {
+func host(urlName string) (h *hostData) {
+	h = &hostData{}
 	u, err := url.Parse(urlName)
 	if err != nil {
 		return
 	}
 	h.host = u.Hostname()
 	if h.host == "" {
-		err = errors.New("invalid hostname")
+		h.err = errors.New("invalid hostname")
 		return
 	}
 	log.Printf("Host: %s\n", h.host)

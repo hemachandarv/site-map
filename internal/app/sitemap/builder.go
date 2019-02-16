@@ -2,6 +2,7 @@ package sitemap
 
 import (
 	"encoding/xml"
+	"net/http"
 )
 
 // Sitemap represents the XML sitemap data
@@ -15,7 +16,22 @@ type Sitemap struct {
 // Build accepts and url and returns a byte slice
 // which represents the sitemap of the url.
 func Build(urlName string) (b []byte, err error) {
-	h, err := host(urlName)
-	_ = h
+	h := host(urlName)
+	link := []Link{}
+	if h.err != nil {
+		err = h.err
+		return
+	}
+	resp, err := http.Get(urlName)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	clink, err := links(resp.Body)
+	if err != nil {
+		return
+	}
+	link = append(link, clink...)
+	_ = link
 	return
 }

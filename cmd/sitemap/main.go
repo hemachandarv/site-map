@@ -17,5 +17,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%s\n", output)
+	fmt.Printf("***\tSITEMAP - %s\t***\n%s\n", *urlName, output)
 }
