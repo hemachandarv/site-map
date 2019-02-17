@@ -1,37 +1,56 @@
 package sitemap
 
 import (
+	"bytes"
 	"encoding/xml"
 	"net/http"
 )
+
+const xmlns = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
 // Sitemap represents the XML sitemap data
 // for a given URL.
 type Sitemap struct {
 	XMLName   xml.Name `xml:"urlset"`
 	Namespace string   `xml:"xmlns,attr"`
-	Location  []Link
+	URL       []Link   `xml:"url"`
 }
 
 // Build accepts and url and returns a byte slice
 // which represents the sitemap of the url.
-func Build(urlName string) (b []byte, err error) {
+func Build(urlName string) ([]byte, error) {
 	h := host(urlName)
-	link := []Link{}
 	if h.err != nil {
-		err = h.err
-		return
+		return nil, h.err
 	}
-	resp, err := http.Get(urlName)
+	links := get(urlName, h)
+	s := &Sitemap{
+		Namespace: xmlns,
+		URL:       links,
+	}
+	buf := bytes.NewBufferString("")
+	enc := xml.NewEncoder(buf)
+	enc.Indent("", "  ")
+	if err := enc.Encode(s); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func get(url string, h *hostData) (links []Link) {
+	resp, err := http.Get(url)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
-	clink, err := links(resp.Body)
-	if err != nil {
-		return
+	h.seen[url] = true
+	clinks, _ := parse(resp.Body)
+	for _, l := range clinks {
+		u := h.link(l)
+		if h.visit(u) {
+			tlinks := get(u, h)
+			links = append(links, tlinks...)
+		}
 	}
-	link = append(link, clink...)
-	_ = link
 	return
 }

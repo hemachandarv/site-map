@@ -2,7 +2,6 @@ package sitemap
 
 import (
 	"io"
-	"log"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -12,17 +11,16 @@ import (
 // Link represents a HTML link "<a href='..'>...</a>"
 // and stores the href attribute.
 type Link struct {
-	Href string `xml:"url>loc"`
+	Href string `xml:"loc"`
 	Text string `xml:"-"`
 }
 
-func links(r io.Reader) (link []Link, err error) {
+func parse(r io.Reader) (link []Link, err error) {
 	n, err := html.Parse(r)
 	if err != nil {
 		return
 	}
 	link = build(anchors(n))
-	log.Printf("%v\n", link)
 	return
 }
 
